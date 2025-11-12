@@ -9,12 +9,49 @@ public class CameraLogic : MonoBehaviour
     [Header("Settings")]
     [SerializeField] private float sensitivity = 2.0f;
     [SerializeField] private float verticalClamp = 80.0f;
+    [SerializeField] private int width = 16;
+    [SerializeField] private int height = 9;
+
+     private float targetAspectRatio = 0 ;
+    float currentAspectRatio = 0;
 
     private float pitch = 0f; // Rotación vertical acumulada
     private float yaw = 0f;   // Rotación horizontal acumulada
     private Vector2 lookInput;
 
-    private bool cursorLocked = true;
+    private void Awake()
+    {
+        targetAspectRatio = width/height;
+
+        currentAspectRatio = targetAspectRatio;
+
+        Camera cam = GetComponent<Camera>();
+
+        float windowAspect = (float)Screen.width / Screen.height;
+        float scaleHeight = windowAspect / targetAspectRatio;
+
+        if (scaleHeight < 1.0f)
+        {
+            // Letterbox
+            Rect rect = cam.rect;
+            rect.width = 1.0f;
+            rect.height = scaleHeight;
+            rect.x = 0;
+            rect.y = (1.0f - scaleHeight) / 2.0f;
+            cam.rect = rect;
+        }
+        else
+        {
+            // Pillarbox
+            float scaleWidth = 1.0f / scaleHeight;
+            Rect rect = cam.rect;
+            rect.width = scaleWidth;
+            rect.height = 1.0f;
+            rect.x = (1.0f - scaleWidth) / 2.0f;
+            rect.y = 0;
+            cam.rect = rect;
+        }
+    }
 
     private void OnEnable()
     {
@@ -52,6 +89,40 @@ public class CameraLogic : MonoBehaviour
     private void Update()
     {
         RotateCamera();
+
+        targetAspectRatio = width / height;
+
+        if (targetAspectRatio != currentAspectRatio)
+        {
+            currentAspectRatio = targetAspectRatio;
+
+            Camera cam = GetComponent<Camera>();
+
+            float windowAspect = (float)Screen.width / Screen.height;
+            float scaleHeight = windowAspect / targetAspectRatio;
+
+            if (scaleHeight < 1.0f)
+            {
+                // Letterbox
+                Rect rect = cam.rect;
+                rect.width = 1.0f;
+                rect.height = scaleHeight;
+                rect.x = 0;
+                rect.y = (1.0f - scaleHeight) / 2.0f;
+                cam.rect = rect;
+            }
+            else
+            {
+                // Pillarbox
+                float scaleWidth = 1.0f / scaleHeight;
+                Rect rect = cam.rect;
+                rect.width = scaleWidth;
+                rect.height = 1.0f;
+                rect.x = (1.0f - scaleWidth) / 2.0f;
+                rect.y = 0;
+                cam.rect = rect;
+            } 
+        }
     }
 
     private void RotateCamera()
@@ -68,13 +139,11 @@ public class CameraLogic : MonoBehaviour
     {
         Cursor.lockState = CursorLockMode.Confined; // Cursor confinado dentro del GameView
         Cursor.visible = false;
-        cursorLocked = true;
     }
 
     private void UnlockCursor()
     {
         Cursor.lockState = CursorLockMode.None; // Cursor libre
         Cursor.visible = true;
-        cursorLocked = false;
     }
 }
