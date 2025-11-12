@@ -4,14 +4,11 @@ public class FrustumVertexCheck : MonoBehaviour
 {
     public Camera cam;
     private Plane[] planes;
-    private Renderer rend;
-
-    private Color outsideColor = Color.red;
-    private Color insideColor = Color.green;
+    private Renderer[] rend;
 
     void Start()
     {
-        rend = GetComponent<Renderer>();
+        rend = GetComponentsInChildren<Renderer>();
     }
 
     void LateUpdate()
@@ -24,14 +21,15 @@ public class FrustumVertexCheck : MonoBehaviour
         planes = GeometryUtility.CalculateFrustumPlanes(cam);
 
         // --- PRIMERA ETAPA: Chequeo rápido con AABB ---
-        Bounds bounds = rend.bounds; // bounds ya están en espacio mundo
+        Bounds bounds = new Bounds(transform.position, Vector3.zero);
+        foreach (var r in rend)
+            bounds.Encapsulate(r.bounds);
 
         bool aabbInside = GeometryUtility.TestPlanesAABB(planes, bounds);
 
         if (!aabbInside)
         {
             // Si la AABB está completamente fuera, ni seguimos
-            rend.material.color = outsideColor;
             return;
         }
 
@@ -69,12 +67,18 @@ public class FrustumVertexCheck : MonoBehaviour
         if (anyInside)
         {
             Debug.Log($"{name}: Algún vértice del objeto está dentro del frustum");
-            rend.material.color = insideColor;
+            foreach (var r in rend)
+            {
+                r.enabled = true;
+            }
         }
         else
         {
             Debug.Log($"{name}: El objeto está completamente fuera del frustum (aunque su AABB estaba dentro)");
-            rend.material.color = outsideColor;
+            foreach (var r in rend)
+            {
+                r.enabled = false;
+            }
         }
     }
 }
